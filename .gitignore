@@ -1,0 +1,16 @@
+node_modules/
+.wrangler/
+dist/
+.DS_Store
+*.log
+.env*
+.dev.vars
+Users/
+.agents/
+.cache/
+done.md
+.clangd
+setup.bat
+build-wasm.bat
+wrangler.toml
+agents.md

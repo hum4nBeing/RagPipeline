@@ -1,0 +1,56 @@
+name = "rag-pipeline"
+main = "src/index.js"
+compatibility_date = "2024-08-15"
+compatibility_flags = [ "nodejs_compat" ]
+
+[vars]
+FRONTEND_URL = "https://your-frontend.pages.dev" # Replace with your live frontend URL
+
+# Enable Workers AI
+[ai]
+binding = "AI"
+remote = true
+
+# KV Namespace for raw documents
+[[kv_namespaces]]
+binding = "DOCUMENT_KV"
+id = "<YOUR_KV_NAMESPACE_ID>"
+
+# Vectorize Index
+[[vectorize]]
+binding = "RAG_INDEX"
+index_name = "rag-index"
+remote = true
+
+# D1 Database
+[[d1_databases]]
+binding = "DOCUMENT_META"
+database_name = "rag-db"
+database_id = "<YOUR_D1_DATABASE_ID>"
+
+# Queue Producer
+[[queues.producers]]
+binding = "PROCESSING_QUEUE"
+queue = "processing-queue"
+
+# Queue Consumer
+[[queues.consumers]]
+queue = "processing-queue"
+max_batch_size = 1 # Process one document at a time
+dead_letter_queue = "dlq-queue"
+max_retries = 5
+
+# Durable Objects for State Management and WebSockets
+[[durable_objects.bindings]]
+name = "DOCUMENT_PROGRESS"
+class_name = "DocumentProgress"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DocumentProgress"]
+
+# Wasm configuration
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+fallthrough = true
