@@ -101,7 +101,11 @@ router.post("/query", async (request, env, ctx) => {
       { role: "user", content: query }
     ];
 
-    const stream = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { messages, stream: true });
+    const stream = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', { 
+      messages, 
+      stream: true,
+      max_tokens: 2048
+    });
 
     return new Response(stream, { headers: { "Content-Type": "text/event-stream", ...getCorsHeaders(env) } });
   } catch (err) {
