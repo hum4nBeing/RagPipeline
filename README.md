@@ -6,9 +6,15 @@ A highly-scalable, zero-maintenance **Retrieval-Augmented Generation (RAG)** arc
 
 ---
 
-## ⚡ Performance Metrics
+## 🎯 The Business Problem
+Organizations struggle to deploy generative AI on proprietary data due to high costs, security concerns, and scaling complexities. Traditional monolithic servers suffer from idle costs, and sending sensitive data to centralized AI providers poses security risks.
 
-This architecture was designed with a strict focus on latency reduction, cost efficiency, and scale. Benchmarks measured directly on the live edge network demonstrate:
+**The Solution:** This project solves these issues by moving the entire AI pipeline to the edge. By utilizing Cloudflare Workers AI and local Vector/SQLite databases, the architecture guarantees that data never leaves the edge ecosystem. Furthermore, the serverless model incurs zero idle costs, scaling exactly with user demand.
+
+---
+
+## 📈 Impact & Performance Benchmarks
+This architecture was designed with a strict focus on latency reduction, cost efficiency, and scale. Benchmarks measured directly on the live edge network demonstrate high-impact results:
 
 *   **Sub-2.5s Document Ingestion:** Achieved high-speed document ingestion (avg. 2261ms) by bypassing traditional monolithic servers, utilizing a distributed Cloudflare Worker and Queue architecture.
 *   **1.13s Time-to-First-Token (TTFT):** Engineered a real-time streaming RAG pipeline, reducing perceived user wait times to a ~1,125ms TTFT utilizing WebSockets and Server-Sent Events.
@@ -16,9 +22,16 @@ This architecture was designed with a strict focus on latency reduction, cost ef
 
 ---
 
-## 🏗️ System Architecture
+## 🚀 Scalability & Load Handling
+Unlike traditional architectures that rely on container orchestration (Kubernetes/Docker) or VM autoscaling groups, this pipeline handles massive scale natively:
 
-The entire pipeline runs on Cloudflare's distributed edge, scaling to zero when not in use and automatically horizontally scaling to handle thousands of concurrent users.
+*   **Horizontal Edge Scaling:** Cloudflare Workers automatically distribute incoming traffic globally across hundreds of data centers. If traffic spikes from 10 users to 10,000 users, the compute scales horizontally and instantly without cold starts.
+*   **Decoupled Heavy Processing:** Document chunking and embedding are extremely CPU-intensive. Instead of blocking web requests, uploads are pushed to **Cloudflare Queues**. A background consumer auto-scales to drain the queue asynchronously, guaranteeing that the frontend never drops a request, even during massive traffic spikes.
+*   **High-Throughput Wasm Chunking:** To handle massive datasets, standard JavaScript string manipulation was bypassed. Instead, texts are chunked via a custom-compiled **C++ WebAssembly (Wasm)** module, yielding deterministic, high-throughput memory execution that outperforms standard Node.js parsers.
+
+---
+
+## 🏗️ System Architecture
 
 1.  **Frontend (React/Vite)**
     *   Hosted on **Cloudflare Pages**.
@@ -27,7 +40,7 @@ The entire pipeline runs on Cloudflare's distributed edge, scaling to zero when 
 2.  **Upload & Background Processing (Workers & Queues)**
     *   Files are uploaded to a **Cloudflare Worker**, temporarily cached in **KV**, and a message is immediately dropped into a **Cloudflare Queue** to decouple heavy processing from the user's web request.
 3.  **Deterministic Chunking (WebAssembly / C++)**
-    *   Instead of relying on slow JavaScript parsing, the Queue Consumer passes the raw text to a custom-compiled **C++ WebAssembly (Wasm)** module that deterministically chunks the text for high-throughput semantic processing.
+    *   The Queue Consumer passes the raw text to a custom-compiled **C++ WebAssembly (Wasm)** module for high-throughput semantic processing.
 4.  **Vectorization & Storage (Vectorize & D1)**
     *   The Wasm chunks are embedded using `@cf/baai/bge-base-en-v1.5`.
     *   The resulting high-dimensional numerical vectors are stored in **Cloudflare Vectorize** to enable rapid semantic similarity search.
@@ -39,7 +52,7 @@ The entire pipeline runs on Cloudflare's distributed edge, scaling to zero when 
 
 ---
 
-## 🚀 How to Run Locally
+## 💻 How to Run Locally
 
 ### Prerequisites
 *   Node.js (v18+)
